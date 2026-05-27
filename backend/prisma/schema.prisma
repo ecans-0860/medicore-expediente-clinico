@@ -20,6 +20,7 @@ model Rol {
 model Usuario {
   id_usuario      Int       @id @default(autoincrement())
   id_rol          Int
+  id_paciente     Int?      @unique
   nombre_completo String    @db.VarChar(150)
   correo          String    @unique @db.VarChar(150)
   password_hash   String    @db.VarChar(255)
@@ -29,34 +30,56 @@ model Usuario {
   updated_at      DateTime  @updatedAt
 
   rol       Rol                 @relation(fields: [id_rol], references: [id_rol])
+  paciente  Paciente?           @relation(fields: [id_paciente], references: [id_paciente])
   consultas ConsultaMedica[]
   citas     CitaMedica[]
   bitacoras BitacoraActividad[]
 
   @@index([id_rol])
+  @@index([id_paciente])
 }
 
 model Paciente {
-  id_paciente      Int       @id @default(autoincrement())
+  id_paciente Int @id @default(autoincrement())
+
   nombres          String    @db.VarChar(100)
   apellidos        String    @db.VarChar(100)
   dpi              String    @unique @db.VarChar(20)
   fecha_nacimiento DateTime?
-  telefono         String?   @db.VarChar(20)
-  direccion        String?   @db.VarChar(255)
   sexo             String?   @db.VarChar(20)
-  correo           String?   @db.VarChar(150)
-  fecha_registro   DateTime  @default(now())
-  estado           String    @default("ACTIVO") @db.VarChar(20)
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @updatedAt
+
+  telefono  String? @db.VarChar(20)
+  correo    String? @db.VarChar(150)
+  direccion String? @db.VarChar(255)
+
+  tipo_sangre  String? @db.VarChar(10)
+  estado_civil String? @db.VarChar(30)
+  ocupacion    String? @db.VarChar(100)
+
+  contacto_emergencia_nombre     String? @db.VarChar(150)
+  contacto_emergencia_telefono   String? @db.VarChar(20)
+  contacto_emergencia_parentesco String? @db.VarChar(50)
+
+  aseguradora   String? @db.VarChar(100)
+  numero_seguro String? @db.VarChar(100)
+
+  observaciones String?
+
+  fecha_registro DateTime @default(now())
+  estado         String   @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   expediente ExpedienteClinico?
   citas      CitaMedica[]
+  usuario    Usuario?
 
   @@index([nombres])
   @@index([apellidos])
   @@index([dpi])
+  @@index([estado])
+  @@index([fecha_registro])
 }
 
 model ExpedienteClinico {
@@ -64,6 +87,7 @@ model ExpedienteClinico {
   id_paciente       Int      @unique
   numero_expediente String   @unique @db.VarChar(50)
   fecha_apertura    DateTime @default(now())
+  motivo_apertura   String?
   estado            String   @default("ACTIVO") @db.VarChar(20)
   observaciones     String?
   created_at        DateTime @default(now())
@@ -79,21 +103,34 @@ model ExpedienteClinico {
 }
 
 model ConsultaMedica {
-  id_consulta             Int      @id @default(autoincrement())
-  id_expediente           Int
-  id_usuario_medico       Int
-  fecha_consulta          DateTime @default(now())
-  motivo                  String
-  observaciones           String?
+  id_consulta       Int @id @default(autoincrement())
+  id_expediente     Int
+  id_usuario_medico Int
+
+  fecha_consulta DateTime @default(now())
+
+  motivo            String
+  enfermedad_actual String?
+  examen_fisico     String?
+  impresion_clinica String?
+  plan_medico       String?
+
+  observaciones String?
+
   signos_vitales          String?
-  peso                    String?  @db.VarChar(20)
-  talla                   String?  @db.VarChar(20)
-  presion_arterial        String?  @db.VarChar(20)
-  temperatura             String?  @db.VarChar(20)
-  frecuencia_cardiaca     String?  @db.VarChar(20)
-  frecuencia_respiratoria String?  @db.VarChar(20)
-  created_at              DateTime @default(now())
-  updated_at              DateTime @updatedAt
+  peso                    String? @db.VarChar(20)
+  talla                   String? @db.VarChar(20)
+  presion_arterial        String? @db.VarChar(20)
+  temperatura             String? @db.VarChar(20)
+  frecuencia_cardiaca     String? @db.VarChar(20)
+  frecuencia_respiratoria String? @db.VarChar(20)
+  saturacion_oxigeno      String? @db.VarChar(20)
+
+  tipo_consulta String? @db.VarChar(50)
+  estado        String  @default("ACTIVA") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   expediente    ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
   usuarioMedico Usuario           @relation(fields: [id_usuario_medico], references: [id_usuario])
@@ -105,6 +142,7 @@ model ConsultaMedica {
   @@index([id_expediente])
   @@index([id_usuario_medico])
   @@index([fecha_consulta])
+  @@index([estado])
 }
 
 model AntecedenteMedico {

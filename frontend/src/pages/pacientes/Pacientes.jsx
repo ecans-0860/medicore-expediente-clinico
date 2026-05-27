@@ -1,0 +1,618 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import {
+    FaHome,
+    FaUserInjured,
+    FaFolderOpen,
+    FaStethoscope,
+    FaNotesMedical,
+    FaPills,
+    FaPrescriptionBottleAlt,
+    FaCalendarAlt,
+    FaUsers,
+    FaClipboardList,
+    FaSignOutAlt,
+    FaSearch,
+    FaEdit,
+    FaEye,
+    FaTrash,
+    FaPlus,
+    FaRedo
+} from "react-icons/fa";
+
+import { useAuth } from "../../context/AuthContext";
+import axiosClient from "../../api/axiosConfig";
+
+const Pacientes = () => {
+
+    const { usuario, logout } = useAuth();
+
+    const navigate = useNavigate();
+
+    const esAdmin = usuario?.rol === "ADMIN";
+
+    const [pacientes, setPacientes] = useState([]);
+    const [busqueda, setBusqueda] = useState("");
+
+    const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
+    const [mostrarModal, setMostrarModal] = useState(false);
+    const [mensaje, setMensaje] = useState("");
+
+    useEffect(() => {
+        obtenerPacientes();
+    }, []);
+
+    const obtenerPacientes = async () => {
+        try {
+
+            const response = await axiosClient.get("/pacientes");
+
+            setPacientes(response.data);
+
+        } catch (error) {
+
+            console.error("Error al obtener pacientes:", error);
+
+        }
+    };
+
+    const confirmarCambioEstado = (paciente) => {
+        setPacienteSeleccionado(paciente);
+        setMostrarModal(true);
+    };
+
+    const cambiarEstadoPaciente = async () => {
+
+        try {
+
+            const nuevoEstado =
+                pacienteSeleccionado.estado === "ACTIVO"
+                    ? "INACTIVO"
+                    : "ACTIVO";
+
+            await axiosClient.put(
+                `/pacientes/${pacienteSeleccionado.id_paciente}`,
+                {
+                    ...pacienteSeleccionado,
+                    estado: nuevoEstado
+                }
+            );
+
+            setMensaje(
+                nuevoEstado === "ACTIVO"
+                    ? "Paciente reactivado correctamente"
+                    : "Paciente desactivado correctamente"
+            );
+
+            setMostrarModal(false);
+
+            obtenerPacientes();
+
+            setTimeout(() => {
+                setMensaje("");
+            }, 3000);
+
+        } catch (error) {
+
+            console.error("Error al cambiar estado:", error);
+
+            setMensaje("Error al cambiar estado del paciente");
+
+        }
+
+    };
+
+    const pacientesFiltrados = pacientes.filter((paciente) =>
+        `${paciente.nombres} ${paciente.apellidos}`
+            .toLowerCase()
+            .includes(busqueda.toLowerCase())
+    );
+
+    const modulos = [
+        { nombre: "Inicio", icono: <FaHome />, ruta: "/dashboard", visible: true },
+        { nombre: "Pacientes", icono: <FaUserInjured />, ruta: "/pacientes", visible: true },
+        { nombre: "Expedientes", icono: <FaFolderOpen />, ruta: "/expedientes", visible: true },
+        { nombre: "Consultas", icono: <FaStethoscope />, ruta: "/consultas", visible: true },
+        { nombre: "Diagnósticos", icono: <FaNotesMedical />, ruta: "/diagnosticos", visible: true },
+        { nombre: "Tratamientos", icono: <FaPills />, ruta: "/tratamientos", visible: true },
+        { nombre: "Recetas", icono: <FaPrescriptionBottleAlt />, ruta: "/recetas", visible: true },
+        { nombre: "Citas", icono: <FaCalendarAlt />, ruta: "/citas", visible: true },
+        { nombre: "Usuarios", icono: <FaUsers />, ruta: "/usuarios", visible: esAdmin },
+        { nombre: "Bitácora", icono: <FaClipboardList />, ruta: "/bitacora", visible: esAdmin }
+    ];
+
+    const styles = {
+        modalOverlay: {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.45)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999
+        },
+
+        modal: {
+            width: "420px",
+            backgroundColor: "#ffffff",
+            borderRadius: "16px",
+            padding: "28px",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+        },
+
+        modalTitle: {
+            fontSize: "24px",
+            color: "#102b5c",
+            marginBottom: "15px"
+        },
+
+        modalText: {
+            color: "#5d6b82",
+            fontSize: "15px",
+            lineHeight: "1.5"
+        },
+
+        modalActions: {
+            marginTop: "25px",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px"
+        },
+
+        cancelButton: {
+            backgroundColor: "#eef2f7",
+            color: "#102b5c",
+            border: "none",
+            borderRadius: "10px",
+            padding: "12px 18px",
+            cursor: "pointer",
+            fontWeight: "bold"
+        },
+
+        confirmButton: {
+            backgroundColor: "#eb5757",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "10px",
+            padding: "12px 18px",
+            cursor: "pointer",
+            fontWeight: "bold"
+        },
+
+        popup: {
+            position: "fixed",
+            top: "25px",
+            right: "25px",
+            backgroundColor: "#ffffff",
+            color: "#102b5c",
+            border: "1px solid #dbe3ee",
+            borderLeft: "5px solid #27ae60",
+            borderRadius: "12px",
+            padding: "16px 20px",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+            fontWeight: "bold",
+            zIndex: 9999
+        },
+        layout: {
+            display: "flex",
+            minHeight: "100vh",
+            backgroundColor: "#f5f7fb",
+            fontFamily: "'Segoe UI', sans-serif"
+        },
+
+        sidebar: {
+            width: "250px",
+            background: "linear-gradient(180deg, #062b5f 0%, #031b3d 100%)",
+            color: "#fff",
+            padding: "25px 18px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between"
+        },
+
+        logo: {
+            textAlign: "center",
+            marginBottom: "35px"
+        },
+
+        logoTitle: {
+            fontSize: "28px",
+            fontWeight: "bold",
+            margin: 0
+        },
+
+        logoSubtitle: {
+            fontSize: "12px",
+            opacity: 0.8,
+            marginTop: "8px"
+        },
+
+        menuItem: {
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "13px 14px",
+            borderRadius: "8px",
+            marginBottom: "8px",
+            cursor: "pointer",
+            fontSize: "15px",
+            color: "#eef4ff"
+        },
+
+        activeItem: {
+            backgroundColor: "#f4bd4f",
+            color: "#08234d",
+            fontWeight: "bold"
+        },
+
+        logout: {
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "13px",
+            borderTop: "1px solid rgba(255,255,255,0.2)",
+            cursor: "pointer",
+            fontSize: "14px"
+        },
+
+        main: {
+            flex: 1,
+            padding: "25px 35px"
+        },
+
+        navbar: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: "1px solid #e1e7f0",
+            paddingBottom: "18px",
+            marginBottom: "25px"
+        },
+
+        title: {
+            fontSize: "30px",
+            color: "#102b5c",
+            margin: 0
+        },
+
+        topActions: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "25px",
+            gap: "20px",
+            flexWrap: "wrap"
+        },
+
+        searchBox: {
+            display: "flex",
+            alignItems: "center",
+            backgroundColor: "#ffffff",
+            border: "1px solid #dbe3ee",
+            borderRadius: "10px",
+            padding: "0 14px",
+            height: "48px",
+            width: "350px"
+        },
+
+        searchInput: {
+            border: "none",
+            outline: "none",
+            flex: 1,
+            fontSize: "14px",
+            marginLeft: "10px"
+        },
+
+        addButton: {
+            backgroundColor: "#0b2c5f",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "10px",
+            padding: "14px 20px",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            cursor: "pointer"
+        },
+
+        tableContainer: {
+            backgroundColor: "#ffffff",
+            borderRadius: "14px",
+            padding: "22px",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+            border: "1px solid #e8edf5",
+            overflowX: "auto"
+        },
+
+        table: {
+            width: "100%",
+            borderCollapse: "collapse"
+        },
+
+        th: {
+            textAlign: "left",
+            padding: "15px",
+            backgroundColor: "#f7f9fc",
+            color: "#102b5c",
+            fontSize: "14px",
+            borderBottom: "1px solid #e1e7f0"
+        },
+
+        td: {
+            padding: "15px",
+            borderBottom: "1px solid #edf1f7",
+            fontSize: "14px",
+            color: "#33415c"
+        },
+
+        estadoActivo: {
+            backgroundColor: "#dff6e4",
+            color: "#1f7a3f",
+            padding: "6px 12px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "bold"
+        },
+        estadoInactivo: {
+            backgroundColor: "#fde2e2",
+            color: "#b42318",
+            padding: "6px 12px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "bold"
+        },
+        acciones: {
+            display: "flex",
+            gap: "10px"
+        },
+
+        actionButton: {
+            border: "none",
+            borderRadius: "8px",
+            width: "35px",
+            height: "35px",
+            cursor: "pointer",
+            color: "#ffffff"
+        }
+    };
+
+    return (
+        <div style={styles.layout}>
+
+            <aside style={styles.sidebar}>
+                <div>
+
+                    <div style={styles.logo}>
+                        <h2 style={styles.logoTitle}>MediCore</h2>
+
+                        <p style={styles.logoSubtitle}>
+                            Sistema de Expediente Clínico Electrónico
+                        </p>
+                    </div>
+
+                    {modulos
+                        .filter((modulo) => modulo.visible)
+                        .map((modulo, index) => (
+                            <div
+                                key={index}
+                                onClick={() => navigate(modulo.ruta)}
+                                style={{
+                                    ...styles.menuItem,
+                                    ...(modulo.ruta === "/pacientes"
+                                        ? styles.activeItem
+                                        : {})
+                                }}
+                            >
+                                {modulo.icono}
+                                <span>{modulo.nombre}</span>
+                            </div>
+                        ))}
+
+                </div>
+
+                <div style={styles.logout} onClick={logout}>
+                    <FaSignOutAlt />
+                    <span>Cerrar sesión</span>
+                </div>
+            </aside>
+
+            {mensaje && (
+                <div style={styles.popup}>
+                    {mensaje}
+                </div>
+            )}
+
+            {mostrarModal && (
+                <div style={styles.modalOverlay}>
+
+                    <div style={styles.modal}>
+
+                        <h2 style={styles.modalTitle}>
+                            {pacienteSeleccionado?.estado === "ACTIVO"
+                                ? "Desactivar paciente"
+                                : "Reactivar paciente"}
+                        </h2>
+
+                        <p style={styles.modalText}>
+                            {pacienteSeleccionado?.estado === "ACTIVO"
+                                ? "¿Desea desactivar este paciente? El paciente seguirá registrado en el sistema."
+                                : "¿Desea reactivar este paciente?"}
+                        </p>
+
+                        <div style={styles.modalActions}>
+
+                            <button
+                                style={styles.cancelButton}
+                                onClick={() => setMostrarModal(false)}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                style={styles.confirmButton}
+                                onClick={cambiarEstadoPaciente}
+                            >
+                                Confirmar
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            <main style={styles.main}>
+
+                <nav style={styles.navbar}>
+                    <h1 style={styles.title}>Pacientes</h1>
+                </nav>
+
+                <section style={styles.topActions}>
+
+                    <div style={styles.searchBox}>
+                        <FaSearch color="#6b7890" />
+
+                        <input
+                            type="text"
+                            placeholder="Buscar paciente..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            style={styles.searchInput}
+                        />
+                    </div>
+
+                    <button
+                        style={styles.addButton}
+                        onClick={() => navigate("/pacientes/crear")}
+                    >
+                        <FaPlus />
+                        Nuevo Paciente
+                    </button>
+
+                </section>
+
+                <section style={styles.tableContainer}>
+
+                    <table style={styles.table}>
+
+                        <thead>
+                            <tr>
+                                <th style={styles.th}>Nombre</th>
+                                <th style={styles.th}>DPI</th>
+                                <th style={styles.th}>Teléfono</th>
+                                <th style={styles.th}>Estado</th>
+                                <th style={styles.th}>Fecha registro</th>
+                                <th style={styles.th}>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {pacientesFiltrados.map((paciente) => (
+                                <tr key={paciente.id_paciente}>
+
+                                    <td style={styles.td}>
+                                        {paciente.nombres} {paciente.apellidos}
+                                    </td>
+
+                                    <td style={styles.td}>
+                                        {paciente.dpi}
+                                    </td>
+
+                                    <td style={styles.td}>
+                                        {paciente.telefono || "N/A"}
+                                    </td>
+
+                                    <td style={styles.td}>
+                                        <span
+                                            style={
+                                                paciente.estado === "ACTIVO"
+                                                    ? styles.estadoActivo
+                                                    : styles.estadoInactivo
+                                            }
+                                        >
+                                            {paciente.estado}
+                                        </span>
+                                    </td>
+
+                                    <td style={styles.td}>
+                                        {new Date(
+                                            paciente.fecha_registro
+                                        ).toLocaleDateString()}
+                                    </td>
+
+                                    <td style={styles.td}>
+
+                                        <div style={styles.acciones}>
+
+                                            <button
+                                                style={{
+                                                    ...styles.actionButton,
+                                                    backgroundColor: "#2f80ed"
+                                                }}
+                                                onClick={() =>
+                                                    navigate(`/pacientes/editar/${paciente.id_paciente}`)
+                                                }
+                                            >
+                                                <FaEdit />
+                                            </button>
+
+                                            <button
+                                                style={{
+                                                    ...styles.actionButton,
+                                                    backgroundColor: "#27ae60"
+                                                }}
+                                                onClick={() => navigate(`/pacientes/ver/${paciente.id_paciente}`)}
+                                            >
+                                                <FaEye />
+                                            </button>
+
+                                            <button
+                                                style={{
+                                                    ...styles.actionButton,
+                                                    backgroundColor: "#eb5757"
+                                                }}
+                                                onClick={() => confirmarCambioEstado(paciente)}
+                                            >
+                                                <FaTrash />
+
+                                            </button>
+                                            {paciente.estado === "INACTIVO" && (
+                                                <button
+                                                    style={{
+                                                        ...styles.actionButton,
+                                                        backgroundColor: "#f4bd4f",
+                                                        color: "#08234d"
+                                                    }}
+                                                    onClick={() => confirmarCambioEstado(paciente)}
+                                                >
+                                                    <FaRedo />
+                                                </button>
+                                            )}
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            ))}
+
+                        </tbody>
+
+                    </table>
+
+                </section>
+
+            </main>
+
+        </div>
+    );
+};
+
+export default Pacientes;

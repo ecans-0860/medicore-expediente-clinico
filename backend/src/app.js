@@ -4,12 +4,47 @@ import dotenv from "dotenv";
 
 import prisma from "./config/prisma.js";
 
+import authRoutes from "./routes/authRoutes.js";
+import pacientesRoutes from "./routes/pacientesRoutes.js";
+import expedientesRoutes from "./routes/expedientesRoutes.js";
+import consultasRoutes from "./routes/consultasRoutes.js";
+import diagnosticosRoutes from "./routes/diagnosticosRoutes.js";
+import tratamientosRoutes from "./routes/tratamientosRoutes.js";
+import recetasRoutes from "./routes/recetasRoutes.js";
+import citasRoutes from "./routes/citasRoutes.js";
+import bitacoraRoutes from "./routes/bitacoraRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+
 dotenv.config();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+/*RUTAS*/
+
+app.use("/api/auth", authRoutes);
+
+app.use("/api/pacientes", pacientesRoutes);
+
+app.use("/api/expedientes", expedientesRoutes);
+
+app.use("/api/consultas", consultasRoutes);
+
+app.use("/api/diagnosticos", diagnosticosRoutes);
+
+app.use("/api/tratamientos", tratamientosRoutes);
+
+app.use("/api/recetas", recetasRoutes);
+
+app.use("/api/citas", citasRoutes);
+
+app.use("/api/bitacora", bitacoraRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
+
+/*RUTA PRINCIPAL*/
 
 app.get("/", async (req, res) => {
 
