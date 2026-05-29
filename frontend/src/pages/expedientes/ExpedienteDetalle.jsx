@@ -8,14 +8,22 @@ import {
     FaUserInjured,
     FaClipboardList,
     FaAllergies,
-    FaStethoscope
+    FaStethoscope,
+    FaFileMedical,
+    FaPills,
+    FaHeartbeat,
+    FaSyringe
 } from "react-icons/fa";
 
 import axiosClient from "../../api/axiosConfig";
+import { useAuth } from "../../context/AuthContext";
 
 const ExpedienteDetalle = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+
+    const { usuario } = useAuth();
+    const esPaciente = usuario?.rol === "PACIENTE";
 
     const [expediente, setExpediente] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -43,7 +51,8 @@ const ExpedienteDetalle = () => {
 
     const styles = {
         container: {
-            minHeight: "100vh",
+            height: "100vh",
+            overflowY: "auto",
             backgroundColor: "#f5f7fb",
             padding: "24px",
             fontFamily: "'Segoe UI', sans-serif"
@@ -126,15 +135,20 @@ const ExpedienteDetalle = () => {
         },
         grid: {
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))",
-            gap: "22px"
+            gridTemplateColumns: "repeat(4, 330px)",
+            gap: "22px",
+            alignItems: "start",
+            paddingBottom: "50px"
         },
         card: {
             backgroundColor: "#ffffff",
             borderRadius: "16px",
             padding: "22px",
             boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-            border: "1px solid #e8edf5"
+            border: "1px solid #e8edf5",
+            width: "330px",
+            minHeight: "210px",
+            boxSizing: "border-box"
         },
         cardTitle: {
             display: "flex",
@@ -235,21 +249,25 @@ const ExpedienteDetalle = () => {
                 <div style={styles.actions}>
                     <button
                         style={styles.backButton}
-                        onClick={() => navigate("/expedientes")}
+                        onClick={() =>
+                            navigate(esPaciente ? "/paciente/expediente" : "/expedientes")
+                        }
                     >
                         <FaArrowLeft />
                         Regresar
                     </button>
 
-                    <button
-                        style={styles.editButton}
-                        onClick={() =>
-                            navigate(`/expedientes/editar/${expediente.id_expediente}`)
-                        }
-                    >
-                        <FaEdit />
-                        Editar expediente
-                    </button>
+                    {!esPaciente && (
+                        <button
+                            style={styles.editButton}
+                            onClick={() =>
+                                navigate(`/expedientes/editar/${expediente.id_expediente}`)
+                            }
+                        >
+                            <FaEdit />
+                            Editar expediente
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -404,7 +422,7 @@ const ExpedienteDetalle = () => {
                                 <br />
                                 Severidad: {mostrarDato(alergia.severidad)}
                                 <br />
-                                {mostrarDato(alergia.descripcion)}
+                                Reacción: {mostrarDato(alergia.reaccion)}
                             </div>
                         ))
                     ) : (
@@ -438,6 +456,123 @@ const ExpedienteDetalle = () => {
                     ) : (
                         <p style={styles.emptyText}>
                             No hay consultas registradas.
+                        </p>
+                    )}
+                </div>
+
+                <div style={styles.card}>
+                    <h2 style={styles.cardTitle}>
+                        <FaPills style={styles.icon} />
+                        Medicamentos actuales
+                    </h2>
+
+                    {expediente.medicamentos_actuales?.length > 0 ? (
+                        expediente.medicamentos_actuales.map((med) => (
+                            <div key={med.id_medicamento} style={styles.listItem}>
+                                <strong>{mostrarDato(med.nombre)}</strong>
+                                <br />
+                                Dosis: {mostrarDato(med.dosis)}
+                                <br />
+                                Frecuencia: {mostrarDato(med.frecuencia)}
+                                <br />
+                                Vía: {mostrarDato(med.via)}
+                                <br />
+                                Observaciones: {mostrarDato(med.observaciones)}
+                            </div>
+                        ))
+                    ) : (
+                        <p style={styles.emptyText}>No hay medicamentos registrados.</p>
+                    )}
+                </div>
+
+                <div style={styles.card}>
+                    <h2 style={styles.cardTitle}>
+                        <FaHeartbeat style={styles.icon} />
+                        Hábitos del paciente
+                    </h2>
+
+                    {expediente.habitos?.length > 0 ? (
+                        expediente.habitos.map((habito) => (
+                            <div key={habito.id_habito} style={styles.listItem}>
+                                <strong>{mostrarDato(habito.tipo)}</strong>
+                                <br />
+                                Descripción: {mostrarDato(habito.descripcion)}
+                                <br />
+                                Frecuencia: {mostrarDato(habito.frecuencia)}
+                            </div>
+                        ))
+                    ) : (
+                        <p style={styles.emptyText}>No hay hábitos registrados.</p>
+                    )}
+                </div>
+                <div style={styles.card}>
+                    <h2 style={styles.cardTitle}>
+                        <FaSyringe style={styles.icon} />
+                        Vacunas
+                    </h2>
+
+                    {expediente.vacunas?.length > 0 ? (
+                        expediente.vacunas.map((vacuna) => (
+                            <div key={vacuna.id_vacuna} style={styles.listItem}>
+                                <strong>{mostrarDato(vacuna.nombre)}</strong>
+                                <br />
+                                Dosis: {mostrarDato(vacuna.dosis)}
+                                <br />
+                                Fecha aplicación:{" "}
+                                {vacuna.fecha_aplicacion
+                                    ? new Date(vacuna.fecha_aplicacion).toLocaleDateString()
+                                    : "No registrado"}
+                                <br />
+                                Observaciones: {mostrarDato(vacuna.observaciones)}
+                            </div>
+                        ))
+                    ) : (
+                        <p style={styles.emptyText}>No hay vacunas registradas.</p>
+                    )}
+                </div>
+
+                <div style={styles.card}>
+                    <h2 style={styles.cardTitle}>
+                        <FaFileMedical style={styles.icon} />
+                        Documentos clínicos
+                    </h2>
+
+                    {expediente.documentos_clinicos?.length > 0 ? (
+                        expediente.documentos_clinicos.map((doc) => (
+                            <div key={doc.id_documento} style={styles.listItem}>
+                                <strong>{mostrarDato(doc.nombre)}</strong>
+                                <br />
+                                Tipo: {mostrarDato(doc.tipo)}
+                                <br />
+                                Descripción: {mostrarDato(doc.descripcion)}
+                                <br />
+
+                                {doc.archivo_url ? (
+                                    <a
+                                        href={`http://localhost:3000${doc.archivo_url}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            backgroundColor: "#0b2c5f",
+                                            color: "#ffffff",
+                                            padding: "8px 12px",
+                                            borderRadius: "8px",
+                                            textDecoration: "none",
+                                            fontWeight: "bold",
+                                            marginTop: "10px",
+                                            display: "inline-block"
+                                        }}
+                                    >
+                                        Ver documento
+                                    </a>
+                                ) : (
+                                    <span>No hay archivo adjunto</span>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <p style={styles.emptyText}>
+                            No hay documentos clínicos registrados.
                         </p>
                     )}
                 </div>

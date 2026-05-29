@@ -3,12 +3,13 @@ import {
     obtenerRecetas,
     obtenerRecetaPorId,
     actualizarReceta,
-    eliminarReceta
+    anularReceta,
+    reactivarReceta
 } from "../services/recetasService.js";
 
+// Crea una nueva receta médica
 export const crear = async (req, res) => {
     try {
-
         const receta = await crearReceta(req.body);
 
         res.status(201).json({
@@ -17,34 +18,30 @@ export const crear = async (req, res) => {
         });
 
     } catch (error) {
-
         res.status(500).json({
             message: error.message
         });
-
     }
 };
 
+// Lista todas las recetas médicas
 export const listar = async (req, res) => {
     try {
-
-        const recetas = await obtenerRecetas();
+        const recetas = await obtenerRecetas(req.usuario);
 
         res.json(recetas);
 
     } catch (error) {
-
         res.status(500).json({
             message: error.message
         });
-
     }
 };
 
+// Obtiene una receta médica por ID
 export const obtenerPorId = async (req, res) => {
     try {
-
-        const receta = await obtenerRecetaPorId(req.params.id);
+        const receta = await obtenerRecetaPorId(req.params.id, req.usuario);
 
         if (!receta) {
             return res.status(404).json({
@@ -55,17 +52,15 @@ export const obtenerPorId = async (req, res) => {
         res.json(receta);
 
     } catch (error) {
-
         res.status(500).json({
             message: error.message
         });
-
     }
 };
 
+// Actualiza una receta médica
 export const actualizar = async (req, res) => {
     try {
-
         const receta = await actualizarReceta(
             req.params.id,
             req.body
@@ -77,28 +72,42 @@ export const actualizar = async (req, res) => {
         });
 
     } catch (error) {
-
         res.status(500).json({
             message: error.message
         });
-
     }
 };
 
-export const eliminar = async (req, res) => {
+// Anula una receta médica sin eliminarla de la base de datos
+export const anular = async (req, res) => {
     try {
-
-        await eliminarReceta(req.params.id);
+        const receta = await anularReceta(req.params.id);
 
         res.json({
-            message: "Receta eliminada correctamente"
+            message: "Receta anulada correctamente",
+            receta
         });
 
     } catch (error) {
-
         res.status(500).json({
             message: error.message
         });
+    }
+};
 
+// Reactiva una receta médica anulada
+export const reactivar = async (req, res) => {
+    try {
+        const receta = await reactivarReceta(req.params.id);
+
+        res.json({
+            message: "Receta reactivada correctamente",
+            receta
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
     }
 };

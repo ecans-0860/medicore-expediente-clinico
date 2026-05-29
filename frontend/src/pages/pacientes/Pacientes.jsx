@@ -23,6 +23,7 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 import axiosClient from "../../api/axiosConfig";
+import logo from "../../assets/logos/medicore-Copy.png";
 
 const Pacientes = () => {
 
@@ -219,6 +220,14 @@ const Pacientes = () => {
             marginBottom: "35px"
         },
 
+        logoImage: {
+            width: "95px",
+            marginBottom: "14px",
+            backgroundColor: "#ffffff",
+            padding: "10px",
+            borderRadius: "14px",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.18)"
+        },
         logoTitle: {
             fontSize: "28px",
             fontWeight: "bold",
@@ -261,7 +270,9 @@ const Pacientes = () => {
 
         main: {
             flex: 1,
-            padding: "25px 35px"
+            padding: "25px 35px",
+            height: "100vh",
+            overflowY: "auto"
         },
 
         navbar: {
@@ -388,6 +399,12 @@ const Pacientes = () => {
                 <div>
 
                     <div style={styles.logo}>
+                        <img
+                            src={logo}
+                            alt="MediCore"
+                            style={styles.logoImage}
+                        />
+
                         <h2 style={styles.logoTitle}>MediCore</h2>
 
                         <p style={styles.logoSubtitle}>

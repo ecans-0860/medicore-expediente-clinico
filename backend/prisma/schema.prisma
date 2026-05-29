@@ -29,14 +29,18 @@ model Usuario {
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 
-  rol       Rol                 @relation(fields: [id_rol], references: [id_rol])
-  paciente  Paciente?           @relation(fields: [id_paciente], references: [id_paciente])
-  consultas ConsultaMedica[]
-  citas     CitaMedica[]
-  bitacoras BitacoraActividad[]
+  rol              Rol                    @relation(fields: [id_rol], references: [id_rol])
+  paciente         Paciente?              @relation(fields: [id_paciente], references: [id_paciente])
+  consultas        ConsultaMedica[]
+  disponibilidades DisponibilidadMedico[]
+  citas            CitaMedica[]
+  bitacoras        BitacoraActividad[]
+  notificaciones   Notificacion[]
 
   @@index([id_rol])
   @@index([id_paciente])
+  @@index([estado])
+  @@index([correo])
 }
 
 model Paciente {
@@ -93,10 +97,14 @@ model ExpedienteClinico {
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
-  paciente     Paciente            @relation(fields: [id_paciente], references: [id_paciente])
-  consultas    ConsultaMedica[]
-  antecedentes AntecedenteMedico[]
-  alergias     Alergia[]
+  paciente              Paciente            @relation(fields: [id_paciente], references: [id_paciente])
+  consultas             ConsultaMedica[]
+  antecedentes          AntecedenteMedico[]
+  alergias              Alergia[]
+  medicamentos_actuales MedicamentoActual[]
+  habitos               HabitoPaciente[]
+  vacunas               VacunaPaciente[]
+  documentos_clinicos   DocumentoClinico[]
 
   @@index([id_paciente])
   @@index([numero_expediente])
@@ -134,10 +142,9 @@ model ConsultaMedica {
 
   expediente    ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
   usuarioMedico Usuario           @relation(fields: [id_usuario_medico], references: [id_usuario])
+  cita          CitaMedica?
 
   diagnosticos Diagnostico[]
-  tratamientos Tratamiento[]
-  recetas      RecetaMedica[]
 
   @@index([id_expediente])
   @@index([id_usuario_medico])
@@ -146,10 +153,14 @@ model ConsultaMedica {
 }
 
 model AntecedenteMedico {
-  id_antecedente Int      @id @default(autoincrement())
+  id_antecedente Int @id @default(autoincrement())
   id_expediente  Int
-  tipo           String   @db.VarChar(100)
-  descripcion    String
+
+  tipo          String  @db.VarChar(100)
+  descripcion   String
+  observaciones String?
+  estado        String  @default("ACTIVO") @db.VarChar(20)
+
   fecha_registro DateTime @default(now())
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
@@ -157,14 +168,20 @@ model AntecedenteMedico {
   expediente ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
 
   @@index([id_expediente])
+  @@index([tipo])
+  @@index([estado])
 }
 
 model Alergia {
-  id_alergia     Int      @id @default(autoincrement())
-  id_expediente  Int
-  sustancia      String   @db.VarChar(150)
-  descripcion    String?
-  severidad      String?  @db.VarChar(50)
+  id_alergia    Int @id @default(autoincrement())
+  id_expediente Int
+
+  sustancia     String  @db.VarChar(150)
+  reaccion      String?
+  severidad     String? @db.VarChar(50)
+  observaciones String?
+  estado        String  @default("ACTIVO") @db.VarChar(20)
+
   fecha_registro DateTime @default(now())
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
@@ -172,6 +189,88 @@ model Alergia {
   expediente ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
 
   @@index([id_expediente])
+  @@index([sustancia])
+  @@index([severidad])
+  @@index([estado])
+}
+
+model MedicamentoActual {
+  id_medicamento_actual Int @id @default(autoincrement())
+  id_expediente         Int
+
+  nombre        String  @db.VarChar(150)
+  dosis         String? @db.VarChar(100)
+  frecuencia    String? @db.VarChar(100)
+  via           String? @db.VarChar(50)
+  observaciones String?
+  estado        String  @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  expediente ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
+
+  @@index([id_expediente])
+  @@index([estado])
+}
+
+model HabitoPaciente {
+  id_habito     Int @id @default(autoincrement())
+  id_expediente Int
+
+  tipo        String  @db.VarChar(100)
+  descripcion String?
+  frecuencia  String? @db.VarChar(100)
+  estado      String  @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  expediente ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
+
+  @@index([id_expediente])
+  @@index([tipo])
+  @@index([estado])
+}
+
+model VacunaPaciente {
+  id_vacuna     Int @id @default(autoincrement())
+  id_expediente Int
+
+  nombre           String    @db.VarChar(150)
+  dosis            String?   @db.VarChar(100)
+  fecha_aplicacion DateTime?
+  observaciones    String?
+  estado           String    @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  expediente ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
+
+  @@index([id_expediente])
+  @@index([nombre])
+  @@index([estado])
+}
+
+model DocumentoClinico {
+  id_documento  Int @id @default(autoincrement())
+  id_expediente Int
+
+  nombre      String  @db.VarChar(150)
+  tipo        String? @db.VarChar(100)
+  archivo_url String?
+  descripcion String?
+  estado      String  @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  expediente ExpedienteClinico @relation(fields: [id_expediente], references: [id_expediente])
+
+  @@index([id_expediente])
+  @@index([tipo])
+  @@index([estado])
 }
 
 model Diagnostico {
@@ -179,78 +278,179 @@ model Diagnostico {
   id_consulta    Int
   descripcion    String
   tipo           String?  @db.VarChar(100)
+  codigo_cie10   String?  @db.VarChar(20)
   observaciones  String?
+  estado         String   @default("ACTIVO") @db.VarChar(20)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
   consulta ConsultaMedica @relation(fields: [id_consulta], references: [id_consulta])
 
+  tratamientos Tratamiento[]
+  recetas      RecetaMedica[]
+
   @@index([id_consulta])
+  @@index([estado])
 }
 
 model Tratamiento {
-  id_tratamiento Int       @id @default(autoincrement())
-  id_consulta    Int
-  descripcion    String
-  indicaciones   String?
-  fecha_inicio   DateTime?
-  fecha_fin      DateTime?
-  estado         String    @default("ACTIVO") @db.VarChar(20)
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
+  id_tratamiento Int @id @default(autoincrement())
+  id_diagnostico Int
 
-  consulta ConsultaMedica @relation(fields: [id_consulta], references: [id_consulta])
+  nombre       String? @db.VarChar(150)
+  descripcion  String
+  indicaciones String?
 
-  @@index([id_consulta])
+  tipo       String? @db.VarChar(100)
+  dosis      String? @db.VarChar(100)
+  frecuencia String? @db.VarChar(100)
+  duracion   String? @db.VarChar(100)
+  via        String? @db.VarChar(50)
+
+  fecha_inicio DateTime?
+  fecha_fin    DateTime?
+
+  observaciones String?
+  estado        String  @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  diagnostico Diagnostico @relation(fields: [id_diagnostico], references: [id_diagnostico])
+
+  @@index([id_diagnostico])
+  @@index([estado])
+  @@index([fecha_inicio])
 }
 
 model RecetaMedica {
-  id_receta     Int      @id @default(autoincrement())
-  id_consulta   Int
+  id_receta      Int @id @default(autoincrement())
+  id_diagnostico Int
+
   fecha_emision DateTime @default(now())
-  indicaciones  String?
+
   medicamentos  String
+  indicaciones  String?
   observaciones String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
 
-  consulta ConsultaMedica @relation(fields: [id_consulta], references: [id_consulta])
+  codigo_receta           String?   @unique @db.VarChar(50)
+  estado                  String    @default("ACTIVA") @db.VarChar(20)
+  fecha_vigencia          DateTime?
+  instrucciones_generales String?
+  proxima_revision        DateTime?
 
-  @@index([id_consulta])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  diagnostico Diagnostico @relation(fields: [id_diagnostico], references: [id_diagnostico])
+
+  @@index([id_diagnostico])
+  @@index([estado])
+  @@index([fecha_emision])
 }
 
 model CitaMedica {
-  id_cita       Int      @id @default(autoincrement())
-  id_paciente   Int
-  id_usuario    Int?
-  fecha_hora    DateTime
-  motivo        String
-  estado        String   @default("PENDIENTE") @db.VarChar(30)
-  observaciones String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  id_cita Int @id @default(autoincrement())
 
-  paciente Paciente @relation(fields: [id_paciente], references: [id_paciente])
-  usuario  Usuario? @relation(fields: [id_usuario], references: [id_usuario])
+  id_paciente Int
+  id_usuario  Int?
+  id_consulta Int? @unique
+
+  fecha_hora DateTime
+  motivo     String
+  tipo_cita  String?  @db.VarChar(50)
+  modalidad  String?  @db.VarChar(30)
+  prioridad  String?  @db.VarChar(30)
+  sintomas   String?
+
+  estado String @default("PENDIENTE") @db.VarChar(30)
+
+  fecha_confirmacion DateTime?
+  fecha_cancelacion  DateTime?
+  motivo_cancelacion String?
+
+  observaciones String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  paciente Paciente        @relation(fields: [id_paciente], references: [id_paciente])
+  usuario  Usuario?        @relation(fields: [id_usuario], references: [id_usuario])
+  consulta ConsultaMedica? @relation(fields: [id_consulta], references: [id_consulta])
 
   @@index([id_paciente])
   @@index([id_usuario])
+  @@index([id_consulta])
   @@index([fecha_hora])
+  @@index([estado])
+}
+
+model DisponibilidadMedico {
+  id_disponibilidad Int @id @default(autoincrement())
+
+  id_usuario_medico Int
+
+  dia_semana  String @db.VarChar(20)
+  hora_inicio String @db.VarChar(10)
+  hora_fin    String @db.VarChar(10)
+
+  estado String @default("ACTIVO") @db.VarChar(20)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  medico Usuario @relation(fields: [id_usuario_medico], references: [id_usuario])
+
+  @@index([id_usuario_medico])
+  @@index([dia_semana])
+  @@index([estado])
 }
 
 model BitacoraActividad {
-  id_bitacora Int      @id @default(autoincrement())
+  id_bitacora Int @id @default(autoincrement())
   id_usuario  Int
-  accion      String   @db.VarChar(150)
+
+  accion      String  @db.VarChar(150)
   descripcion String?
-  modulo      String?  @db.VarChar(100)
-  fecha_hora  DateTime @default(now())
-  ip_origen   String?  @db.VarChar(45)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  modulo      String? @db.VarChar(100)
+
+  tipo_evento String? @db.VarChar(50)
+  resultado   String  @default("EXITOSO") @db.VarChar(30)
+
+  fecha_hora DateTime @default(now())
+
+  ip_origen  String? @db.VarChar(45)
+  user_agent String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 
   @@index([id_usuario])
   @@index([fecha_hora])
+  @@index([modulo])
+  @@index([tipo_evento])
+  @@index([resultado])
+}
+
+model Notificacion {
+  id_notificacion Int      @id @default(autoincrement())
+  id_usuario      Int
+
+  titulo  String @db.VarChar(150)
+  mensaje String
+  tipo    String @db.VarChar(50)
+  leida   Boolean @default(false)
+  url     String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@index([id_usuario])
+  @@index([tipo])
+  @@index([leida])
+  @@index([created_at])
 }

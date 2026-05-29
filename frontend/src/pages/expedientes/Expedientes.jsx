@@ -23,12 +23,15 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 import axiosClient from "../../api/axiosConfig";
+import logo from "../../assets/logos/medicore-Copy.png";
 
 const Expedientes = () => {
     const { usuario, logout } = useAuth();
     const navigate = useNavigate();
 
     const esAdmin = usuario?.rol === "ADMIN";
+
+    const esPaciente = usuario?.rol === "PACIENTE";
 
     const [expedientes, setExpedientes] = useState([]);
     const [busqueda, setBusqueda] = useState("");
@@ -99,18 +102,28 @@ const Expedientes = () => {
         );
     });
 
-    const modulos = [
-        { nombre: "Inicio", icono: <FaHome />, ruta: "/dashboard", visible: true },
-        { nombre: "Pacientes", icono: <FaUserInjured />, ruta: "/pacientes", visible: true },
-        { nombre: "Expedientes", icono: <FaFolderOpen />, ruta: "/expedientes", visible: true },
-        { nombre: "Consultas", icono: <FaStethoscope />, ruta: "/consultas", visible: true },
-        { nombre: "Diagnósticos", icono: <FaNotesMedical />, ruta: "/diagnosticos", visible: true },
-        { nombre: "Tratamientos", icono: <FaPills />, ruta: "/tratamientos", visible: true },
-        { nombre: "Recetas", icono: <FaPrescriptionBottleAlt />, ruta: "/recetas", visible: true },
-        { nombre: "Citas", icono: <FaCalendarAlt />, ruta: "/citas", visible: true },
-        { nombre: "Usuarios", icono: <FaUsers />, ruta: "/usuarios", visible: esAdmin },
-        { nombre: "Bitácora", icono: <FaClipboardList />, ruta: "/bitacora", visible: esAdmin }
-    ];
+    const modulos = esPaciente
+        ? [
+            { nombre: "Inicio", icono: <FaHome />, ruta: "/dashboard-paciente", visible: true },
+            { nombre: "Mis citas", icono: <FaCalendarAlt />, ruta: "/paciente/citas", visible: true },
+            { nombre: "Programar cita", icono: <FaPlus />, ruta: "/paciente/citas/crear", visible: true },
+            { nombre: "Mi expediente", icono: <FaFolderOpen />, ruta: "/paciente/expediente", visible: true },
+            { nombre: "Mis consultas", icono: <FaStethoscope />, ruta: "/paciente/consultas", visible: true },
+            { nombre: "Mis recetas", icono: <FaPrescriptionBottleAlt />, ruta: "/paciente/recetas", visible: true },
+            { nombre: "Mis tratamientos", icono: <FaPills />, ruta: "/paciente/tratamientos", visible: true }
+        ]
+        : [
+            { nombre: "Inicio", icono: <FaHome />, ruta: "/dashboard", visible: true },
+            { nombre: "Pacientes", icono: <FaUserInjured />, ruta: "/pacientes", visible: true },
+            { nombre: "Expedientes", icono: <FaFolderOpen />, ruta: "/expedientes", visible: true },
+            { nombre: "Consultas", icono: <FaStethoscope />, ruta: "/consultas", visible: true },
+            { nombre: "Diagnósticos", icono: <FaNotesMedical />, ruta: "/diagnosticos", visible: true },
+            { nombre: "Tratamientos", icono: <FaPills />, ruta: "/tratamientos", visible: true },
+            { nombre: "Recetas", icono: <FaPrescriptionBottleAlt />, ruta: "/recetas", visible: true },
+            { nombre: "Citas", icono: <FaCalendarAlt />, ruta: "/citas", visible: true },
+            { nombre: "Usuarios", icono: <FaUsers />, ruta: "/usuarios", visible: esAdmin },
+            { nombre: "Bitácora", icono: <FaClipboardList />, ruta: "/bitacora", visible: esAdmin }
+        ];
 
     const styles = {
         modalOverlay: {
@@ -199,6 +212,14 @@ const Expedientes = () => {
             textAlign: "center",
             marginBottom: "35px"
         },
+        logoImage: {
+            width: "95px",
+            marginBottom: "14px",
+            backgroundColor: "#ffffff",
+            padding: "10px",
+            borderRadius: "14px",
+            boxShadow: "0 8px 18px rgba(0,0,0,0.18)"
+        },
         logoTitle: {
             fontSize: "28px",
             fontWeight: "bold",
@@ -236,7 +257,9 @@ const Expedientes = () => {
         },
         main: {
             flex: 1,
-            padding: "25px 35px"
+            padding: "25px 35px",
+            height: "100vh",
+            overflowY: "auto"
         },
         navbar: {
             display: "flex",
@@ -332,7 +355,8 @@ const Expedientes = () => {
         },
         acciones: {
             display: "flex",
-            gap: "10px"
+            gap: "10px",
+            flexWrap: "wrap"
         },
         actionButton: {
             border: "none",
@@ -349,6 +373,12 @@ const Expedientes = () => {
             <aside style={styles.sidebar}>
                 <div>
                     <div style={styles.logo}>
+                        <img
+                            src={logo}
+                            alt="MediCore"
+                            style={styles.logoImage}
+                        />
+
                         <h2 style={styles.logoTitle}>MediCore</h2>
 
                         <p style={styles.logoSubtitle}>
@@ -364,9 +394,12 @@ const Expedientes = () => {
                                 onClick={() => navigate(modulo.ruta)}
                                 style={{
                                     ...styles.menuItem,
-                                    ...(modulo.ruta === "/expedientes"
-                                        ? styles.activeItem
-                                        : {})
+                                    ...(
+                                        (esPaciente && modulo.ruta === "/paciente/expediente") ||
+                                            (!esPaciente && modulo.ruta === "/expedientes")
+                                            ? styles.activeItem
+                                            : {}
+                                    )
                                 }}
                             >
                                 {modulo.icono}
@@ -439,13 +472,15 @@ const Expedientes = () => {
                         />
                     </div>
 
-                    <button
-                        style={styles.addButton}
-                        onClick={() => navigate("/expedientes/crear")}
-                    >
-                        <FaPlus />
-                        Nuevo Expediente
-                    </button>
+                    {!esPaciente && (
+                        <button
+                            style={styles.addButton}
+                            onClick={() => navigate("/expedientes/crear")}
+                        >
+                            <FaPlus />
+                            Nuevo Expediente
+                        </button>
+                    )}
                 </section>
 
                 <section style={styles.tableContainer}>
@@ -498,17 +533,19 @@ const Expedientes = () => {
 
                                     <td style={styles.td}>
                                         <div style={styles.acciones}>
-                                            <button
-                                                style={{
-                                                    ...styles.actionButton,
-                                                    backgroundColor: "#2f80ed"
-                                                }}
-                                                onClick={() =>
-                                                    navigate(`/expedientes/editar/${expediente.id_expediente}`)
-                                                }
-                                            >
-                                                <FaEdit />
-                                            </button>
+                                            {!esPaciente && (
+                                                <button
+                                                    style={{
+                                                        ...styles.actionButton,
+                                                        backgroundColor: "#2f80ed"
+                                                    }}
+                                                    onClick={() =>
+                                                        navigate(`/expedientes/editar/${expediente.id_expediente}`)
+                                                    }
+                                                >
+                                                    <FaEdit />
+                                                </button>
+                                            )}
 
                                             <button
                                                 style={{
@@ -516,33 +553,41 @@ const Expedientes = () => {
                                                     backgroundColor: "#27ae60"
                                                 }}
                                                 onClick={() =>
-                                                    navigate(`/expedientes/ver/${expediente.id_expediente}`)
+                                                    navigate(
+                                                        esPaciente
+                                                            ? `/paciente/expediente/ver/${expediente.id_expediente}`
+                                                            : `/expedientes/ver/${expediente.id_expediente}`
+                                                    )
                                                 }
                                             >
                                                 <FaEye />
                                             </button>
 
-                                            <button
-                                                style={{
-                                                    ...styles.actionButton,
-                                                    backgroundColor: "#eb5757"
-                                                }}
-                                                onClick={() => confirmarCambioEstado(expediente)}
-                                            >
-                                                <FaTrash />
-                                            </button>
+                                            {!esPaciente && (
+                                                <>
+                                                    <button
+                                                        style={{
+                                                            ...styles.actionButton,
+                                                            backgroundColor: "#eb5757"
+                                                        }}
+                                                        onClick={() => confirmarCambioEstado(expediente)}
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
 
-                                            {expediente.estado === "INACTIVO" && (
-                                                <button
-                                                    style={{
-                                                        ...styles.actionButton,
-                                                        backgroundColor: "#f4bd4f",
-                                                        color: "#08234d"
-                                                    }}
-                                                    onClick={() => confirmarCambioEstado(expediente)}
-                                                >
-                                                    <FaRedo />
-                                                </button>
+                                                    {expediente.estado === "INACTIVO" && (
+                                                        <button
+                                                            style={{
+                                                                ...styles.actionButton,
+                                                                backgroundColor: "#f4bd4f",
+                                                                color: "#08234d"
+                                                            }}
+                                                            onClick={() => confirmarCambioEstado(expediente)}
+                                                        >
+                                                            <FaRedo />
+                                                        </button>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </td>

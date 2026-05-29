@@ -30,52 +30,52 @@ const Login = () => {
   };
 
   const iniciarSesion = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  try {
-    const respuesta = await api.post("/auth/login", formulario);
+    try {
+      const respuesta = await api.post("/auth/login", formulario);
 
-    const usuario = respuesta.data.usuario;
-    const token = respuesta.data.token;
-    const rol = usuario.rol;
+      const usuario = respuesta.data.usuario;
+      const token = respuesta.data.token;
+      const rol = usuario.rol;
 
-    if (tipoUsuario === "Paciente" && rol !== "PACIENTE") {
-      setError("Este usuario no pertenece al acceso de pacientes");
-      return;
+      if (tipoUsuario === "Paciente" && rol !== "PACIENTE") {
+        setError("Este usuario no pertenece al acceso de pacientes");
+        return;
+      }
+
+      if (tipoUsuario === "Personal Médico" && rol === "PACIENTE") {
+        setError("Este usuario no pertenece al acceso de personal médico");
+        return;
+      }
+
+      login(usuario, token);
+
+      if (rol === "PACIENTE") {
+        navigate("/dashboard-paciente");
+      } else {
+        navigate("/dashboard");
+      }
+
+      console.log("Login correcto:", respuesta.data);
+
+    } catch (error) {
+      setError("Correo o contraseña incorrectos");
     }
-
-    if (tipoUsuario === "Personal Médico" && rol === "PACIENTE") {
-      setError("Este usuario no pertenece al acceso de personal médico");
-      return;
-    }
-
-    login(usuario, token);
-
-  if (rol === "PACIENTE") {
-    navigate("/dashboard-paciente");
-  } else {
-    navigate("/dashboard");
-  }
-
-  console.log("Login correcto:", respuesta.data);
-
-  } catch (error) {
-    setError("Correo o contraseña incorrectos");
-  }
-};
+  };
 
   const estilos = {
     container: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    display: "flex",
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-    fontFamily: "Arial, Helvetica, sans-serif",
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      display: "flex",
+      overflow: "hidden",
+      backgroundColor: "#ffffff",
+      fontFamily: "Arial, Helvetica, sans-serif",
     },
 
     left: {
@@ -97,7 +97,14 @@ const Login = () => {
       alignItems: "center",
       textAlign: "center",
     },
-
+    logoImage: {
+      width: "95px",
+      marginBottom: "14px",
+      backgroundColor: "#ffffff",
+      padding: "10px",
+      borderRadius: "14px",
+      boxShadow: "0 8px 18px rgba(0,0,0,0.18)"
+    },
     logoLeft: {
       width: "190px",
       backgroundColor: "#ffffff",
@@ -312,7 +319,7 @@ const Login = () => {
               <FontAwesomeIcon
                 icon={faUser}
                 style={estilos.inputIcon}
-                />
+              />
               <input
                 type="email"
                 name="correo"
@@ -328,7 +335,7 @@ const Login = () => {
               <FontAwesomeIcon
                 icon={faLock}
                 style={estilos.inputIcon}
-                />
+              />
               <input
                 type="password"
                 name="password"

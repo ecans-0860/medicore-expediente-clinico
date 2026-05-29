@@ -2,14 +2,47 @@ import {
     crearExpediente,
     obtenerExpedientes,
     obtenerExpedientePorId,
+    obtenerExpedientesPorUsuarioPaciente,
     actualizarExpediente,
     eliminarExpediente
 } from "../services/expedientesService.js";
 
+import { registrarBitacora } from "../services/bitacoraService.js";
+
+const prepararBodyConArchivos = (body, files = []) => {
+    const data = { ...body };
+
+    data.antecedentes = JSON.parse(body.antecedentes || "[]");
+    data.alergias = JSON.parse(body.alergias || "[]");
+    data.medicamentos_actuales = JSON.parse(body.medicamentos_actuales || "[]");
+    data.habitos = JSON.parse(body.habitos || "[]");
+    data.vacunas = JSON.parse(body.vacunas || "[]");
+    data.documentos_clinicos = JSON.parse(body.documentos_clinicos || "[]");
+
+    data.documentos_clinicos = data.documentos_clinicos.map((doc, index) => ({
+        ...doc,
+        archivo_url: files[index]
+            ? `/uploads/documentos_clinicos/${files[index].filename}`
+            : doc.archivo_url || null
+    }));
+
+    return data;
+};
+
 export const crear = async (req, res) => {
     try {
 
-        const expediente = await crearExpediente(req.body);
+        const data = prepararBodyConArchivos(req.body, req.files);
+
+        const expediente = await crearExpediente(data);
+
+        await registrarBitacora({
+            id_usuario: req.usuario.id_usuario,
+            accion: "CREAR_EXPEDIENTE",
+            descripcion: `Se creó el expediente clínico ${expediente.numero_expediente}`,
+            modulo: "Expedientes",
+            ip_origen: req.ip
+        });
 
         res.status(201).json({
             message: "Expediente clínico creado correctamente",
@@ -25,8 +58,18 @@ export const crear = async (req, res) => {
     }
 };
 
+
+
 export const listar = async (req, res) => {
     try {
+
+        if (req.usuario.rol === "PACIENTE") {
+            const expedientesPaciente = await obtenerExpedientesPorUsuarioPaciente(
+                req.usuario.id_usuario
+            );
+
+            return res.json(expedientesPaciente);
+        }
 
         const expedientes = await obtenerExpedientes();
 
@@ -52,6 +95,15 @@ export const obtenerPorId = async (req, res) => {
             });
         }
 
+        if (
+            req.usuario.rol === "PACIENTE" &&
+            expediente.paciente?.usuario?.id_usuario !== req.usuario.id_usuario
+        ) {
+            return res.status(403).json({
+                message: "No tienes permiso para ver este expediente"
+            });
+        }
+
         res.json(expediente);
 
     } catch (error) {
@@ -66,10 +118,19 @@ export const obtenerPorId = async (req, res) => {
 export const actualizar = async (req, res) => {
     try {
 
+        const data = prepararBodyConArchivos(req.body, req.files);
+
         const expediente = await actualizarExpediente(
             req.params.id,
-            req.body
+            data
         );
+        await registrarBitacora({
+            id_usuario: req.usuario.id_usuario,
+            accion: "ACTUALIZAR_EXPEDIENTE",
+            descripcion: `Se actualizó el expediente clínico ${expediente.numero_expediente}`,
+            modulo: "Expedientes",
+            ip_origen: req.ip
+        });
 
         res.json({
             message: "Expediente actualizado correctamente",
@@ -88,7 +149,15 @@ export const actualizar = async (req, res) => {
 export const eliminar = async (req, res) => {
     try {
 
-        await eliminarExpediente(req.params.id);
+        const expediente = await eliminarExpediente(req.params.id);
+
+        await registrarBitacora({
+            id_usuario: req.usuario.id_usuario,
+            accion: "ELIMINAR_EXPEDIENTE",
+            descripcion: `Se desactivó el expediente clínico ${expediente.numero_expediente}`,
+            modulo: "Expedientes",
+            ip_origen: req.ip
+        });
 
         res.json({
             message: "Expediente desactivado correctamente"

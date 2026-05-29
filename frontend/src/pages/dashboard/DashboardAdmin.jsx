@@ -11,13 +11,16 @@ import {
   FaUsers,
   FaClipboardList,
   FaSignOutAlt,
-  FaBell,
   FaUserCircle
 } from "react-icons/fa";
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import axiosClient from "../../api/axiosConfig";
+import logo from "../../assets/logos/medicore-Copy.png";
+import NotificacionesDropdown from "../../components/notificaciones/NotificacionesDropdown";
+
 
 const DashboardAdmin = () => {
   const { usuario, logout } = useAuth();
@@ -25,17 +28,6 @@ const DashboardAdmin = () => {
   const navigate = useNavigate();
 
   const esAdmin = usuario?.rol === "ADMIN";
-
-  const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
-  const [notificaciones, setNotificaciones] = useState([
-    "Nueva cita médica registrada",
-    "Nuevo paciente ingresado",
-    "Expediente actualizado"
-  ]);
-
-  const abrirNotificaciones = () => {
-    setMostrarNotificaciones(!mostrarNotificaciones);
-  };
 
   const [resumen, setResumen] = useState({
     pacientes: 0,
@@ -78,29 +70,6 @@ const DashboardAdmin = () => {
   ];
 
   const styles = {
-    notificationBox: {
-      position: "absolute",
-      top: "35px",
-      right: "0",
-      width: "260px",
-      backgroundColor: "#ffffff",
-      border: "1px solid #e1e7f0",
-      borderRadius: "12px",
-      boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-      padding: "12px",
-      zIndex: 10
-    },
-    notificationItem: {
-      fontSize: "13px",
-      color: "#33415c",
-      padding: "10px 0",
-      borderBottom: "1px solid #edf1f7"
-    },
-    notificationEmpty: {
-      fontSize: "13px",
-      color: "#6b7890",
-      padding: "10px"
-    },
     layout: {
       display: "flex",
       minHeight: "100vh",
@@ -119,6 +88,14 @@ const DashboardAdmin = () => {
     logo: {
       textAlign: "center",
       marginBottom: "35px"
+    },
+    logoImage: {
+      width: "95px",
+      marginBottom: "14px",
+      backgroundColor: "#ffffff",
+      padding: "10px",
+      borderRadius: "14px",
+      boxShadow: "0 8px 18px rgba(0,0,0,0.18)"
     },
     logoTitle: {
       fontSize: "28px",
@@ -178,24 +155,6 @@ const DashboardAdmin = () => {
       gap: "18px",
       color: "#102b5c",
       fontWeight: "bold"
-    },
-    bell: {
-      position: "relative",
-      fontSize: "20px"
-    },
-    badge: {
-      position: "absolute",
-      top: "-9px",
-      right: "-8px",
-      backgroundColor: "#e8505b",
-      color: "#fff",
-      borderRadius: "50%",
-      fontSize: "10px",
-      width: "17px",
-      height: "17px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
     },
     welcomeCard: {
       backgroundColor: "#ffffff",
@@ -287,7 +246,14 @@ const DashboardAdmin = () => {
       <aside style={styles.sidebar}>
         <div>
           <div style={styles.logo}>
+            <img
+              src={logo}
+              alt="MediCore"
+              style={styles.logoImage}
+            />
+
             <h2 style={styles.logoTitle}>MediCore</h2>
+
             <p style={styles.logoSubtitle}>
               Sistema de Expediente Clínico Electrónico
             </p>
@@ -321,49 +287,7 @@ const DashboardAdmin = () => {
           <h1 style={styles.title}>Dashboard</h1>
 
           <div style={styles.userBox}>
-            <div style={styles.bell} onClick={abrirNotificaciones}>
-              <FaBell />
-              {notificaciones.length > 0 && (
-                <span style={styles.badge}>{notificaciones.length}</span>
-              )}
-
-              {mostrarNotificaciones && (
-                <div style={styles.notificationBox}>
-
-                  {notificaciones.length > 0 ? (
-                    <>
-                      {notificaciones.map((notificacion, index) => (
-                        <div key={index} style={styles.notificationItem}>
-                          {notificacion}
-                        </div>
-                      ))}
-
-                      <button
-                        onClick={() => setNotificaciones([])}
-                        style={{
-                          marginTop: "10px",
-                          width: "100%",
-                          padding: "8px",
-                          border: "none",
-                          borderRadius: "8px",
-                          backgroundColor: "#0b2c5f",
-                          color: "#ffffff",
-                          cursor: "pointer",
-                          fontWeight: "bold"
-                        }}
-                      >
-                        Marcar como leídas
-                      </button>
-                    </>
-                  ) : (
-                    <div style={styles.notificationEmpty}>
-                      No tienes notificaciones nuevas.
-                    </div>
-                  )}
-
-                </div>
-              )}
-            </div>
+            <NotificacionesDropdown />
 
             <FaUserCircle size={35} />
             <span>{usuario?.rol}</span>

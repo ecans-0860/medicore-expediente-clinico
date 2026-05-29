@@ -5,7 +5,8 @@ import {
     listar,
     obtenerPorId,
     actualizar,
-    eliminar
+    anular,
+    reactivar
 } from "../controllers/tratamientosController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
@@ -20,6 +21,8 @@ router.get("/:id", verifyToken, obtenerPorId);
 
 router.put("/:id", verifyToken, actualizar);
 
-router.delete("/:id", verifyToken, eliminar);
+router.patch("/:id/anular", verifyToken, anular);
+
+router.patch("/:id/reactivar", verifyToken, reactivar);
 
 export default router;

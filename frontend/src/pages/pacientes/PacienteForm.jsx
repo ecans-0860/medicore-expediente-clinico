@@ -36,7 +36,11 @@ const PacienteForm = () => {
         contacto_emergencia_parentesco: "",
         aseguradora: "",
         numero_seguro: "",
-        observaciones: ""
+        observaciones: "",
+        crear_usuario_paciente: false,
+        usuario_correo: "",
+        usuario_password: "",
+        confirmar_password: ""
     });
 
     const [loading, setLoading] = useState(false);
@@ -94,11 +98,52 @@ const PacienteForm = () => {
 
     }, [id]);
 
+    const generarCorreoPaciente = (nombres, apellidos) => {
+        const limpiarTexto = (texto) => {
+            return texto
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s]/g, "")
+                .trim()
+                .split(/\s+/)[0] || "";
+        };
+
+        const primerNombre = limpiarTexto(nombres);
+        const primerApellido = limpiarTexto(apellidos);
+
+        if (!primerNombre || !primerApellido) {
+            return "";
+        }
+
+        return `${primerNombre}.${primerApellido}@pacientesmedicore.com`;
+    };
+
     const handleChange = (e) => {
-        setFormData({
+        const { name, value, type, checked } = e.target;
+
+        let nuevosDatos = {
             ...formData,
-            [e.target.name]: e.target.value
-        });
+            [name]: type === "checkbox" ? checked : value
+        };
+
+        if (
+            name === "nombres" ||
+            name === "apellidos" ||
+            name === "crear_usuario_paciente"
+        ) {
+            const correoGenerado = generarCorreoPaciente(
+                name === "nombres" ? value : nuevosDatos.nombres,
+                name === "apellidos" ? value : nuevosDatos.apellidos
+            );
+
+            nuevosDatos.usuario_correo =
+                nuevosDatos.crear_usuario_paciente
+                    ? correoGenerado
+                    : "";
+        }
+
+        setFormData(nuevosDatos);
     };
 
     const guardarPaciente = async (e) => {
@@ -121,6 +166,22 @@ const PacienteForm = () => {
             return;
         }
 
+        if (!esEdicion && formData.crear_usuario_paciente) {
+            if (
+                !formData.usuario_correo ||
+                !formData.usuario_password ||
+                !formData.confirmar_password
+            ) {
+                alert("Complete los datos del usuario de acceso");
+                return;
+            }
+
+            if (formData.usuario_password !== formData.confirmar_password) {
+                alert("Las contraseñas del usuario no coinciden");
+                return;
+            }
+        }
+
         try {
             setLoading(true);
 
@@ -132,9 +193,9 @@ const PacienteForm = () => {
 
             } else {
 
-                await axiosClient.post("/pacientes", formData);
+                const response = await axiosClient.post("/pacientes", formData);
 
-                setMensaje("Paciente registrado correctamente");
+                setMensaje(response.data.message || "Paciente registrado correctamente");
 
             }
 
@@ -256,6 +317,32 @@ const PacienteForm = () => {
             resize: "none",
             backgroundColor: "#ffffff"
         },
+
+        accessBox: {
+            marginTop: "20px",
+            backgroundColor: "#f7f9fc",
+            border: "1px solid #dbe3ee",
+            borderRadius: "14px",
+            padding: "18px",
+            width: "fit-content"
+        },
+
+        checkboxRow: {
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            color: "#102b5c",
+            fontWeight: "bold",
+            marginBottom: "16px"
+        },
+
+        checkbox: {
+            width: "18px",
+            height: "18px",
+            cursor: "pointer",
+            accentColor: "#1f57ac"
+        },
+
         actions: {
             marginTop: "30px",
             display: "flex",
@@ -522,6 +609,85 @@ const PacienteForm = () => {
                         }} />
                     </div>
                 </div>
+                {!esEdicion && (
+                    <>
+                        <h2 style={styles.sectionTitle}>
+                            <FaShieldAlt style={styles.sectionIcon} />
+                            Usuario de acceso del paciente
+                        </h2>
+
+                        <div style={styles.accessBox}>
+                            <label style={styles.checkboxRow}>
+                                <input
+                                    type="checkbox"
+                                    name="crear_usuario_paciente"
+                                    checked={formData.crear_usuario_paciente}
+                                    onChange={handleChange}
+                                    style={styles.checkbox}
+                                />
+                                Crear usuario de acceso para este paciente
+                            </label>
+
+                            {formData.crear_usuario_paciente && (
+                                <div style={styles.grid}>
+                                    <div style={styles.field}>
+                                        <label style={styles.label}>
+                                            Correo de acceso <span style={styles.required}>*</span>
+                                        </label>
+
+                                        <input
+                                            type="email"
+                                            name="usuario_correo"
+                                            value={formData.usuario_correo}
+                                            readOnly
+                                            style={{
+                                                ...styles.input,
+                                                width: "300px",
+                                                backgroundColor: "#eef3fb",
+                                                color: "#102b5c",
+                                                fontWeight: "600"
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div style={styles.field}>
+                                        <label style={styles.label}>
+                                            Contraseña temporal <span style={styles.required}>*</span>
+                                        </label>
+
+                                        <input
+                                            type="password"
+                                            name="usuario_password"
+                                            value={formData.usuario_password}
+                                            onChange={handleChange}
+                                            style={{
+                                                ...styles.input,
+                                                width: "180px"
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div style={styles.field}>
+                                        <label style={styles.label}>
+                                            Confirmar contraseña <span style={styles.required}>*</span>
+                                        </label>
+
+                                        <input
+                                            type="password"
+                                            name="confirmar_password"
+                                            value={formData.confirmar_password}
+                                            onChange={handleChange}
+                                            style={{
+                                                ...styles.input,
+                                                width: "180px"
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
 
                 <h2 style={styles.sectionTitle}>
                     Observaciones generales

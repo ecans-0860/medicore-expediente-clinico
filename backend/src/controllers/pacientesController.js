@@ -11,7 +11,9 @@ import { registrarBitacora } from "../services/bitacoraService.js";
 export const crear = async (req, res) => {
     try {
 
-        const paciente = await crearPaciente(req.body);
+        const resultado = await crearPaciente(req.body, req.usuario);
+
+        const paciente = resultado.paciente;
 
         await registrarBitacora({
             id_usuario: req.usuario.id_usuario,
@@ -22,8 +24,11 @@ export const crear = async (req, res) => {
         });
 
         res.status(201).json({
-            message: "Paciente creado correctamente",
-            paciente
+            message: resultado.usuarioPaciente
+                ? "Paciente y usuario de acceso creados correctamente"
+                : "Paciente creado correctamente",
+            paciente: resultado.paciente,
+            usuarioPaciente: resultado.usuarioPaciente
         });
 
     } catch (error) {

@@ -10,15 +10,27 @@ import {
 
 import { verifyToken } from "../middlewares/verifyToken.js";
 
+import uploadDocumentos from "../middlewares/uploadDocumentos.js";
+
 const router = express.Router();
 
-router.post("/", verifyToken, crear);
+router.post(
+    "/",
+    verifyToken,
+    uploadDocumentos.array("documentos_clinicos"),
+    crear
+);
 
 router.get("/", verifyToken, listar);
 
 router.get("/:id", verifyToken, obtenerPorId);
 
-router.put("/:id", verifyToken, actualizar);
+router.put(
+    "/:id",
+    verifyToken,
+    uploadDocumentos.array("documentos_clinicos"),
+    actualizar
+);
 
 router.delete("/:id", verifyToken, eliminar);
 

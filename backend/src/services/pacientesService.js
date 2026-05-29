@@ -1,4 +1,5 @@
 import prisma from "../config/prisma.js";
+import bcrypt from "bcryptjs";
 
 const prepararDatosPaciente = (data) => {
     return {
@@ -25,7 +26,7 @@ const prepararDatosPaciente = (data) => {
     };
 };
 
-export const crearPaciente = async (data) => {
+export const crearPaciente = async (data, usuarioSesion) => {
     const pacienteExiste = await prisma.paciente.findUnique({
         where: {
             dpi: data.dpi
@@ -36,11 +37,93 @@ export const crearPaciente = async (data) => {
         throw new Error("Ya existe un paciente registrado con este DPI");
     }
 
-    const paciente = await prisma.paciente.create({
-        data: prepararDatosPaciente(data)
+    if (data.crear_usuario_paciente) {
+        if (usuarioSesion.rol !== "MEDICO" && usuarioSesion.rol !== "ADMIN") {
+            throw new Error("No tienes permisos para crear usuario de paciente");
+        }
+
+        if (!data.usuario_correo || !data.usuario_password || !data.confirmar_password) {
+            throw new Error("Debe completar correo, contraseña y confirmación");
+        }
+
+        if (data.usuario_password !== data.confirmar_password) {
+            throw new Error("Las contraseñas no coinciden");
+        }
+    }
+
+    const resultado = await prisma.$transaction(async (tx) => {
+        const paciente = await tx.paciente.create({
+            data: prepararDatosPaciente(data)
+        });
+
+        let usuarioPaciente = null;
+
+        if (data.crear_usuario_paciente) {
+            const rolPaciente = await tx.rol.findUnique({
+                where: {
+                    nombre: "PACIENTE"
+                }
+            });
+
+            if (!rolPaciente) {
+                throw new Error("No existe el rol PACIENTE");
+            }
+
+            const usuarioYaAsociado = await tx.usuario.findUnique({
+                where: {
+                    id_paciente: paciente.id_paciente
+                }
+            });
+
+            if (usuarioYaAsociado) {
+                throw new Error("Este paciente ya tiene un usuario asociado");
+            }
+
+            let correoFinal = data.usuario_correo;
+
+            const correoExiste = await tx.usuario.findUnique({
+                where: {
+                    correo: correoFinal
+                }
+            });
+
+            if (correoExiste) {
+
+                const anioNacimiento = new Date(
+                    data.fecha_nacimiento
+                ).getFullYear();
+
+                const partes = correoFinal.split("@");
+
+                correoFinal =
+                    `${partes[0]}${anioNacimiento}@${partes[1]}`;
+            }
+
+            const password_hash = await bcrypt.hash(data.usuario_password, 10);
+
+            usuarioPaciente = await tx.usuario.create({
+                data: {
+                    nombre_completo: `${paciente.nombres} ${paciente.apellidos}`,
+                    correo: correoFinal,
+                    password_hash,
+                    id_rol: rolPaciente.id_rol,
+                    id_paciente: paciente.id_paciente,
+                    estado: "ACTIVO"
+                },
+                include: {
+                    rol: true,
+                    paciente: true
+                }
+            });
+        }
+
+        return {
+            paciente,
+            usuarioPaciente
+        };
     });
 
-    return paciente;
+    return resultado;
 };
 
 export const obtenerPacientes = async () => {

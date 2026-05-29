@@ -5,7 +5,8 @@ import {
     listar,
     obtenerPorId,
     actualizar,
-    eliminar
+    anular,
+    reactivar
 } from "../controllers/recetasController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
@@ -20,6 +21,8 @@ router.get("/:id", verifyToken, obtenerPorId);
 
 router.put("/:id", verifyToken, actualizar);
 
-router.delete("/:id", verifyToken, eliminar);
+router.put("/:id/anular", verifyToken, anular);
+
+router.put("/:id/reactivar", verifyToken, reactivar);
 
 export default router;

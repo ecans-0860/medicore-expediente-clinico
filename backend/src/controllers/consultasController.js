@@ -9,7 +9,15 @@ import {
 export const crear = async (req, res) => {
     try {
 
-        const consulta = await crearConsulta(req.body);
+        const idMedico =
+            req.usuario.rol === "ADMIN"
+                ? req.body.id_usuario_medico
+                : req.usuario.id_usuario;
+
+        const consulta = await crearConsulta(
+            req.body,
+            idMedico
+        );
 
         res.status(201).json({
             message: "Consulta médica creada correctamente",
@@ -28,7 +36,7 @@ export const crear = async (req, res) => {
 export const listar = async (req, res) => {
     try {
 
-        const consultas = await obtenerConsultas();
+        const consultas = await obtenerConsultas(req.usuario);
 
         res.json(consultas);
 
@@ -44,7 +52,7 @@ export const listar = async (req, res) => {
 export const obtenerPorId = async (req, res) => {
     try {
 
-        const consulta = await obtenerConsultaPorId(req.params.id);
+        const consulta = await obtenerConsultaPorId(req.params.id, req.usuario);
 
         if (!consulta) {
             return res.status(404).json({
@@ -91,7 +99,7 @@ export const eliminar = async (req, res) => {
         await eliminarConsulta(req.params.id);
 
         res.json({
-            message: "Consulta eliminada correctamente"
+            message: "Consulta anulada correctamente"
         });
 
     } catch (error) {
