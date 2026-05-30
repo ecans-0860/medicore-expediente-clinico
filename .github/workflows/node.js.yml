@@ -46,11 +46,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
+      - run: npx prisma generate --schema=./backend/prisma/migrations/schema.prisma
 
-      - name: Run Prisma Migrations
-        run: npx prisma migrate deploy
+      - run: npx prisma migrate deploy --schema=./backend/prisma/migrations/schema.prisma
 
       - name: Lint
         run: npm run lint --if-present
