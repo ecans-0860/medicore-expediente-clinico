@@ -76,11 +76,66 @@ const UsuarioForm = () => {
         }
     };
 
+    const generarCorreoUsuario = (nombreCompleto, idRol) => {
+        const limpiarTexto = (texto) => {
+            return texto
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s]/g, "")
+                .trim();
+        };
+
+        const partes = limpiarTexto(nombreCompleto)
+            .split(/\s+/)
+            .filter(Boolean);
+
+        if (partes.length < 2) {
+            return "";
+        }
+
+        const primerNombre = partes[0];
+
+        const primerApellido =
+            partes.length >= 4
+                ? partes[partes.length - 2]
+                : partes[partes.length - 1];
+
+        const rol = roles.find(
+            (r) => Number(r.id_rol) === Number(idRol)
+        );
+
+        const dominio =
+            rol?.nombre === "PACIENTE"
+                ? "pacientesmedicore.com"
+                : "medicore.com";
+
+        return `${primerNombre}.${primerApellido}@${dominio}`;
+    };
+
     const handleChange = (e) => {
-        setFormData({
+        const { name, value } = e.target;
+
+        let nuevosDatos = {
             ...formData,
-            [e.target.name]: e.target.value
-        });
+            [name]: value
+        };
+
+        if (
+            !esEdicion &&
+            (name === "nombre_completo" || name === "id_rol")
+        ) {
+            nuevosDatos.correo = generarCorreoUsuario(
+                name === "nombre_completo"
+                    ? value
+                    : nuevosDatos.nombre_completo,
+                name === "id_rol"
+                    ? value
+                    : nuevosDatos.id_rol
+            );
+        }
+
+        setFormData(nuevosDatos);
     };
 
     const rolSeleccionado = roles.find(
@@ -406,11 +461,13 @@ const UsuarioForm = () => {
                         >
                             <option value="">Seleccione un rol</option>
 
-                            {roles.map((rol) => (
-                                <option key={rol.id_rol} value={rol.id_rol}>
-                                    {rol.nombre}
-                                </option>
-                            ))}
+                            {roles
+                                .filter((rol) => rol.nombre !== "PACIENTE")
+                                .map((rol) => (
+                                    <option key={rol.id_rol} value={rol.id_rol}>
+                                        {rol.nombre}
+                                    </option>
+                                ))}
                         </select>
                     </div>
 
