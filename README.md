@@ -71,6 +71,7 @@ git clone https://github.com/mlopezg71-stack/medicore-expediente-clinico
 ```bash
 cd backend
 npm install
+npx prisma generate
 npm run dev
 ```
 
