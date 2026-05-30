@@ -120,3 +120,4 @@ Eberson Estuardo Can                          0900-08-60
 
 Proyecto desarrollado para Ingeniería de Software Fase II.
 Universidad Mariano Gálvez de Guatemala.
+--2026--
