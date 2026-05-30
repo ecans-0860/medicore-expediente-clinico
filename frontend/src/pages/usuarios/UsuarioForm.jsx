@@ -83,6 +83,7 @@ const UsuarioForm = () => {
                 .normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "")
                 .replace(/[^a-z0-9\s]/g, "")
+                .replace(/^dr\s+|^dra\s+/i, "")
                 .trim();
         };
 
@@ -105,12 +106,15 @@ const UsuarioForm = () => {
             (r) => Number(r.id_rol) === Number(idRol)
         );
 
-        const dominio =
-            rol?.nombre === "PACIENTE"
-                ? "pacientesmedicore.com"
-                : "medicore.com";
+        if (rol?.nombre === "MEDICO") {
+            return `dr.${primerNombre}.${primerApellido}@medicore.com`;
+        }
 
-        return `${primerNombre}.${primerApellido}@${dominio}`;
+        if (rol?.nombre === "PACIENTE") {
+            return `${primerNombre}.${primerApellido}@pacientesmedicore.com`;
+        }
+
+        return `${primerNombre}.${primerApellido}@medicore.com`;
     };
 
     const handleChange = (e) => {
@@ -161,8 +165,18 @@ const UsuarioForm = () => {
             return;
         }
 
+        const formatearNombreCompleto = () => {
+            const nombreLimpio = formData.nombre_completo.trim();
+
+            if (esMedico && !nombreLimpio.toLowerCase().startsWith("dr.")) {
+                return `Dr. ${nombreLimpio}`;
+            }
+
+            return nombreLimpio;
+        };
+
         const dataEnviar = {
-            nombre_completo: formData.nombre_completo,
+            nombre_completo: formatearNombreCompleto(),
             correo: formData.correo,
             id_rol: Number(formData.id_rol),
             estado: formData.estado
@@ -461,13 +475,11 @@ const UsuarioForm = () => {
                         >
                             <option value="">Seleccione un rol</option>
 
-                            {roles
-                                .filter((rol) => rol.nombre !== "PACIENTE")
-                                .map((rol) => (
-                                    <option key={rol.id_rol} value={rol.id_rol}>
-                                        {rol.nombre}
-                                    </option>
-                                ))}
+                            {roles.map((rol) => (
+                                <option key={rol.id_rol} value={rol.id_rol}>
+                                    {rol.nombre}
+                                </option>
+                            ))}
                         </select>
                     </div>
 

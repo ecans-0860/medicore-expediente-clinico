@@ -6,7 +6,7 @@ export const registrarUsuario = async (data) => {
   const { nombre_completo, correo, password, id_rol } = data;
 
   const usuarioExiste = await prisma.usuario.findFirst({
-  where: { correo: correo }
+    where: { correo: correo }
   });
 
   if (usuarioExiste) {
@@ -52,7 +52,17 @@ export const loginUsuario = async (data) => {
     throw new Error("Usuario inactivo");
   }
 
+  await prisma.usuario.update({
+    where: {
+      id_usuario: usuario.id_usuario
+    },
+    data: {
+      ultimo_acceso: new Date()
+    }
+  });
+
   const token = jwt.sign(
+
     {
       id_usuario: usuario.id_usuario,
       id_paciente: usuario.id_paciente,
