@@ -41,9 +41,11 @@ jobs:
 
       - run: npm ci
 
-      - run: npx prisma generate
+      - run: npm install
 
-      - run: npx prisma migrate deploy
+      - run: npm prisma generate
+
+      - run: npm prisma migrate deploy
 
       - run: npm run lint
 
