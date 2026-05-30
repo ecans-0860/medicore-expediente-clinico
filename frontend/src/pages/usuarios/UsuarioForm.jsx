@@ -123,13 +123,18 @@ const UsuarioForm = () => {
             if (esEdicion) {
                 await axiosClient.put(`/usuarios/${id}`, dataEnviar);
 
-                if (esMedico) {
+                const quiereActualizarDisponibilidad =
+                    disponibilidad.dias_semana.length > 0 ||
+                    disponibilidad.hora_inicio ||
+                    disponibilidad.hora_fin;
+
+                if (esMedico && quiereActualizarDisponibilidad) {
                     if (
                         disponibilidad.dias_semana.length === 0 ||
                         !disponibilidad.hora_inicio ||
                         !disponibilidad.hora_fin
                     ) {
-                        alert("Complete la disponibilidad médica del usuario");
+                        alert("Si va a modificar disponibilidad, complete días, hora inicio y hora fin");
                         setLoading(false);
                         return;
                     }

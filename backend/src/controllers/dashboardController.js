@@ -4,7 +4,15 @@ export const obtenerResumenDashboard = async (req, res) => {
   try {
     const pacientes = await prisma.paciente.count();
     const expedientes = await prisma.expedienteClinico.count();
-    const citas = await prisma.citaMedica.count();
+
+    const citas = await prisma.citaMedica.count({
+      where: {
+        estado: {
+          in: ["PENDIENTE", "CONFIRMADA"]
+        }
+      }
+    });
+
     const usuarios = await prisma.usuario.count();
 
     res.json({

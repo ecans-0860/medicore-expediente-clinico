@@ -115,6 +115,7 @@ JWT_EXPIRES_IN=8h
 
 ## Autores
 
-Marcous Marcous Samir Andree Lopez Gonzalez 
+Marcous Marcous Samir Andree Lopez Gonzalez 0900-18-13299
+
 Proyecto desarrollado para Ingeniería de Software Fase II.
 Universidad Mariano Gálvez de Guatemala.
